@@ -8,9 +8,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.WorldView;
+import net.runelite.api.IndexedObjectSet;
 import net.runelite.api.NPC;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
@@ -22,11 +23,10 @@ import net.runelite.client.util.ColorUtil;
 
 public class AgilityPyramidSliderBlockTimerOverlay extends Overlay
 {
-	private Map<Integer, Integer> trapLastPositions = new HashMap<>();
-	private Map<Integer, Instant> trapStartTimers = new HashMap<>();
+	private final Map<Integer, Integer> trapLastPositions = new HashMap<>();
+	private final Map<Integer, Instant> trapStartTimers = new HashMap<>();
 
 	private final Client client;
-	private final AgilityPyramidSliderBlockTimerPlugin plugin;
 	private final AgilityPyramidSliderBlockTimerConfig config;
 
 	@Inject
@@ -36,19 +36,18 @@ public class AgilityPyramidSliderBlockTimerOverlay extends Overlay
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 		this.client = client;
-		this.plugin = plugin;
 		this.config = config;
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		Set<NPC> npcs = plugin.getNpcs();
-		if (!npcs.isEmpty())
+		WorldView worldView = client.getLocalPlayer().getWorldView();
+		IndexedObjectSet<? extends NPC> npcs = worldView.npcs();
+		if (npcs.getSize() > 0)
 		{
 			Color trapHighlightColor = config.getSliderBlockColor();
 			npcs.forEach((npc) -> {
-
 				if (Npcs.TRAP_NPC_IDS.contains(npc.getId()))
 				{
 					Polygon tilePoly = npc.getCanvasTilePoly();
@@ -61,18 +60,13 @@ public class AgilityPyramidSliderBlockTimerOverlay extends Overlay
 					if (lastTrapPosition != null)
 					{
 						Integer restingPosition = Npcs.TRAP_RESTING_POSITION.get(npc.getId());
-						boolean shouldRenderTime = false;
-
-						if ((movementDimension.equals("x") && restingPosition.equals(xPos))
-							|| (movementDimension.equals("y") && restingPosition.equals(yPos)))
-						{
-							shouldRenderTime = true;
-						}
+						boolean shouldRenderTime = (movementDimension.equals("x") && restingPosition.equals(xPos))
+								|| (movementDimension.equals("y") && restingPosition.equals(yPos));
 
 						if (shouldRenderTime && tilePoly != null)
 						{
 							if ((movementDimension.equals("x") && !lastTrapPosition.equals(xPos))
-								|| (movementDimension.equals("y") && !lastTrapPosition.equals(yPos)))
+									|| (movementDimension.equals("y") && !lastTrapPosition.equals(yPos)))
 							{
 								trapStartTimers.put(npc.getId(), Instant.now());
 							}
@@ -99,8 +93,8 @@ public class AgilityPyramidSliderBlockTimerOverlay extends Overlay
 
 							final Duration duration = Duration.between(timer, Instant.now());
 							progressPie.setProgress(1 - (duration.compareTo(trapTime) < 0
-								? (double) duration.toMillis() / trapTime.toMillis()
-								: 1));
+									? (double) duration.toMillis() / trapTime.toMillis()
+									: 1));
 
 							progressPie.render(graphics);
 						}
