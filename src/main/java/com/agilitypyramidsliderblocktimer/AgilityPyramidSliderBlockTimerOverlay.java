@@ -11,8 +11,6 @@ import java.util.Map;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.WorldView;
-import net.runelite.api.IndexedObjectSet;
-import net.runelite.api.NPC;
 import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.ui.overlay.Overlay;
@@ -43,11 +41,10 @@ public class AgilityPyramidSliderBlockTimerOverlay extends Overlay
 	public Dimension render(Graphics2D graphics)
 	{
 		WorldView worldView = client.getLocalPlayer().getWorldView();
-		IndexedObjectSet<? extends NPC> npcs = worldView.npcs();
-		if (npcs.getSize() > 0)
+		if (worldView != null)
 		{
 			Color trapHighlightColor = config.getSliderBlockColor();
-			npcs.forEach((npc) -> {
+			worldView.npcs().forEach((npc) -> {
 				if (Npcs.TRAP_NPC_IDS.contains(npc.getId()))
 				{
 					Polygon tilePoly = npc.getCanvasTilePoly();
